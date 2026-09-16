@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  ADMIN
+  SELLER
+  VIEWER
+}
+enum InvoiceStatus {
+  DRAFT
+  PAID
+  CANCELLED
+}
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  SALE
+  REVERSAL
+}
+model Organization {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  currency String @default("COP")
+  taxRate Int @default(19)
+  nextInvoice Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users User[]
+  customers Customer[]
+  categories Category[]
+  products Product[]
+  movements InventoryMovement[]
+  invoices Invoice[]
+  auditLogs AuditLog[]
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  email String @unique
+  name String
+  passwordHash String
+  role Role @default(VIEWER)
+  active Boolean @default(true)
+  sessionVersion Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tokens RefreshToken[]
+  @@unique([organizationId,id])
+}
+model RefreshToken {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id])
+  tokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId,expiresAt])
+}
+model Customer {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  name String
+  email String
+  phone String @default("")
+  address String @default("")
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invoices Invoice[]
+  @@unique([organizationId,id])
+  @@index([organizationId,deletedAt,name])
+}
+model Category {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products Product[]
+  @@unique([organizationId,id])
+  @@unique([organizationId,name])
+}
+model Product {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  categoryId String @db.Uuid
+  category Category @relation(fields:[organizationId,categoryId], references:[organizationId,id])
+  name String
+  sku String
+  priceCents Int
+  stock Int @default(0)
+  minStock Int @default(5)
+  active Boolean @default(true)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  movements InventoryMovement[]
+  items InvoiceItem[]
+  @@unique([organizationId,id])
+  @@unique([organizationId,sku])
+  @@index([organizationId,deletedAt,name])
+}
+model InventoryMovement {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  productId String @db.Uuid
+  product Product @relation(fields:[organizationId,productId], references:[organizationId,id])
+  type MovementType
+  quantity Int
+  balance Int
+  reason String
+  actorId String @db.Uuid
+  createdAt DateTime @default(now())
+  @@index([organizationId,createdAt])
+}
+model Invoice {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  customerId String @db.Uuid
+  customer Customer @relation(fields:[organizationId,customerId], references:[organizationId,id])
+  number String
+  status InvoiceStatus @default(DRAFT)
+  subtotalCents Int
+  taxCents Int
+  totalCents Int
+  taxRate Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items InvoiceItem[]
+  @@unique([organizationId,id])
+  @@unique([organizationId,number])
+  @@index([organizationId,createdAt,status])
+  @@index([organizationId,customerId])
+}
+model InvoiceItem {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  invoiceId String @db.Uuid
+  invoice Invoice @relation(fields:[organizationId,invoiceId], references:[organizationId,id])
+  productId String @db.Uuid
+  product Product @relation(fields:[organizationId,productId], references:[organizationId,id])
+  name String
+  quantity Int
+  unitPriceCents Int
+  lineTotalCents Int
+  @@index([organizationId,productId])
+}
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id])
+  actorId String @db.Uuid
+  action String
+  entityId String
+  createdAt DateTime @default(now())
+  @@index([organizationId,createdAt])
+}

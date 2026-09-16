@@ -1,0 +1,59 @@
+{
+  "name": "jmesa-novabill-demo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev:api": "ts-node apps/api/src/main.ts",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p apps/api && npm run typecheck -w apps/web && tsc --noEmit -p tests/tsconfig.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "jest --runInBand --config jest.config.cjs",
+    "test:integration": "jest --runInBand --config jest.integration.cjs",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "start:api": "node apps/api/dist/main.js",
+    "check:secrets": "node scripts/check-secrets.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.0",
+    "dotenv": "^17.2.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.2.5",
+    "@nestjs/core": "^11.2.5",
+    "@nestjs/platform-express": "^11.2.5",
+    "@nestjs/swagger": "^11.4.7",
+    "@playwright/test": "^1.57.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.0",
+    "eslint": "^9.39.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.7.0",
+    "prisma": "6.19.0",
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.48.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "effect": "3.22.2",
+    "multer": "2.4.0"
+  }
+}

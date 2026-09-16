@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+.local
+package-lock.json
+coverage
+playwright-report
+test-results
+next-env.d.ts
