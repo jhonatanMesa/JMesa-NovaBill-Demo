@@ -75,7 +75,7 @@ jobs:
             test-results/
       - name: Container logs on failure
         if: failure()
-        run: docker compose logs --tail 100
+        run: if [ -f .env ]; then docker compose logs --tail 100; fi
       - name: Stop containers
         if: always()
-        run: docker compose down
+        run: if [ -f .env ]; then docker compose down; fi
